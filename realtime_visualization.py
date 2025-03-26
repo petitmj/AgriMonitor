@@ -9,13 +9,15 @@ st.set_page_config(page_title="🌾 Agriculture Monitoring", layout="wide")
 st.title("🌾 Agriculture Monitoring System with AWS Integration")
 
 # Fetch data from DynamoDB using credentials from Streamlit Secrets
-@st.cache_data(ttl=60)  # Refresh data every 60 seconds
+@st.cache_data(ttl=60)
 def fetch_data():
     try:
-        # Get AWS credentials from Streamlit Secrets
         aws_access_key_id = st.secrets["aws"]["aws_access_key_id"]
         aws_secret_access_key = st.secrets["aws"]["aws_secret_access_key"]
         region_name = st.secrets["aws"]["region_name"]
+
+        # Log AWS credentials to verify
+        st.write(f"Region: {region_name}")
 
         # Initialize DynamoDB resource
         dynamodb = boto3.resource(
@@ -25,30 +27,32 @@ def fetch_data():
             region_name=region_name
         )
 
-        # Access the DynamoDB table
+        # Check if table exists
         table = dynamodb.Table('AgricultureMonitoring')
+        st.write("Attempting to scan the table...")
 
-        # Scan table data
         response = table.scan()
         items = response.get('Items', [])
+        st.write(f"Items fetched: {len(items)}")
 
-        # Convert to DataFrame
         if not items:
             return pd.DataFrame(columns=["timestamp", "temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"])
 
         df = pd.DataFrame(items)
 
-        # Convert data types
         for col in ["temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"]:
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         df.dropna(inplace=True)
-
-        # Sort by timestamp for accurate time series visualization
         df.sort_values('timestamp', inplace=True)
 
         return df
+
+    except Exception as e:
+        st.error(f"Error fetching data from DynamoDB: {e}")
+        return pd.DataFrame(columns=["timestamp", "temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"])
+
 
     except Exception as e:
         st.error(f"Error fetching data from DynamoDB: {e}")
