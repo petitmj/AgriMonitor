@@ -4,6 +4,10 @@ import boto3
 from datetime import datetime
 import time
 
+st.write(st.secrets["aws"]["aws_access_key_id"])
+st.write(st.secrets["aws"]["region_name"])
+
+
 # Streamlit configuration
 st.set_page_config(page_title="🌾 Agriculture Monitoring", layout="wide")
 st.title("🌾 Agriculture Monitoring System with AWS Integration")
