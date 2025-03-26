@@ -12,34 +12,21 @@ st.title("🌾 Agriculture Monitoring System with AWS Integration")
 @st.cache_data(ttl=60)
 def fetch_data():
     try:
-        aws_access_key_id = st.secrets["aws"]["aws_access_key_id"]
-        aws_secret_access_key = st.secrets["aws"]["aws_secret_access_key"]
-        region_name = st.secrets["aws"]["region_name"]
-
-        # Log AWS credentials to verify
-        st.write(f"Region: {region_name}")
-
-        # Initialize DynamoDB resource
-        dynamodb = boto3.resource(
-            'dynamodb',
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            region_name=region_name
+        session = boto3.Session(
+            aws_access_key_id=st.secrets["aws"]["aws_access_key_id"],
+            aws_secret_access_key=st.secrets["aws"]["aws_secret_access_key"],
+            region_name=st.secrets["aws"]["region_name"]
         )
 
-        # Check if table exists
+        dynamodb = session.resource('dynamodb')
         table = dynamodb.Table('AgricultureMonitoring')
-        st.write("Attempting to scan the table...")
-
         response = table.scan()
         items = response.get('Items', [])
-        st.write(f"Items fetched: {len(items)}")
 
         if not items:
             return pd.DataFrame(columns=["timestamp", "temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"])
 
         df = pd.DataFrame(items)
-
         for col in ["temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"]:
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
@@ -53,10 +40,6 @@ def fetch_data():
         st.error(f"Error fetching data from DynamoDB: {e}")
         return pd.DataFrame(columns=["timestamp", "temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"])
 
-
-    except Exception as e:
-        st.error(f"Error fetching data from DynamoDB: {e}")
-        return pd.DataFrame(columns=["timestamp", "temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"])
 
 # Fetch and display data
 df = fetch_data()
