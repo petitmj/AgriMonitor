@@ -77,7 +77,7 @@ async def interpret_data(prompt):
     """Interprets agricultural sensor data using an LLM (Hugging Face API)."""
     hf_api_token = st.secrets["huggingface"]["api_token"]
     headers = {"Authorization": f"Bearer {hf_api_token}"}
-    model = "facebook/bart-large-cnn"
+    model = "tiiuae/falcon-7b-instruct"
     API_URL = f"https://api-inference.huggingface.co/models/{model}"
 
     async with aiohttp.ClientSession() as session:
