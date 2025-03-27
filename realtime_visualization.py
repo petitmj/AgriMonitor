@@ -63,7 +63,7 @@ def fetch_data():
 def interpret_data(prompt):
     hf_api_token = st.secrets["huggingface"]["api_token"]
     headers = {"Authorization": f"Bearer {hf_api_token}"}
-    model = "davin-ai/agriculture-bert"  # Alternative: "facebook/bart-large-cnn"
+    model = "recobo/agriculture-bert-uncased"  # Alternative: "facebook/bart-large-cnn"
     API_URL = f"https://api-inference.huggingface.co/models/{model}"
     payload = {"inputs": prompt}
 
