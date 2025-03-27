@@ -176,7 +176,7 @@ elif view_mode == "Simple":
 
             response = interpret_data(prompt)
             st.session_state["chat_history"].append(("LLM", response))
-            st.experimental_rerun()
+            st.rerun()
 
     # Display chat history
     if st.session_state["chat_history"]:
