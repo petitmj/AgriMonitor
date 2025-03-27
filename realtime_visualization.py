@@ -82,7 +82,7 @@ def interpret_data(prompt):
 # ================================
 # Sidebar: Choose View Mode
 # ================================
-view_mode = st.sidebar.radio("Select View", ["Dashboard", "Simple"])
+view_mode = st.sidebar.radio("Select View", ["Dashboard", "Chat"])
 
 # ================================
 # Dashboard View (Existing Visualization)
@@ -120,7 +120,7 @@ if view_mode == "Dashboard":
 # ================================
 # Simple Chat View (LLM Interpretation)
 # ================================
-elif view_mode == "Simple":
+elif view_mode == "Chat":
     st.header("🌾 Agricultural Data Interpretation Chat")
     df = fetch_data()
 
