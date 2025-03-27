@@ -30,8 +30,10 @@ def fetch_data():
         items = response.get('Items', [])
 
         if not items:
-            return pd.DataFrame(columns=["timestamp", "temperature", "humidity", "soil_moisture",
-                                         "soil_nitrogen", "soil_phosphorus", "soil_potassium"])
+            return pd.DataFrame(columns=[
+                "timestamp", "temperature", "humidity", "soil_moisture",
+                "soil_nitrogen", "soil_phosphorus", "soil_potassium"
+            ])
 
         df = pd.DataFrame(items)
         for col in ["temperature", "humidity", "soil_moisture", "soil_nitrogen", "soil_phosphorus", "soil_potassium"]:
@@ -43,8 +45,10 @@ def fetch_data():
 
     except Exception as e:
         st.error(f"Error fetching data from DynamoDB: {e}")
-        return pd.DataFrame(columns=["timestamp", "temperature", "humidity", "soil_moisture",
-                                     "soil_nitrogen", "soil_phosphorus", "soil_potassium"])
+        return pd.DataFrame(columns=[
+            "timestamp", "temperature", "humidity", "soil_moisture",
+            "soil_nitrogen", "soil_phosphorus", "soil_potassium"
+        ])
 
 # -------------------------------
 # Function to interpret results using Hugging Face Inference API
@@ -58,21 +62,20 @@ def interpret_results(latest_data):
         f"Nitrogen: {latest_data['soil_nitrogen']} mg/kg\n"
         f"Phosphorus: {latest_data['soil_phosphorus']} mg/kg\n"
         f"Potassium: {latest_data['soil_potassium']} mg/kg\n\n"
-        "Provide a detailed interpretation of these readings for crop health and suggest any improvements."
+        "Provide a detailed interpretation of these readings for crop health and suggest improvements."
     )
 
-    # Initialize Hugging Face Inference API client (using a model like google/flan-t5-xl)
     hf_inference = InferenceApi(repo_id="google/flan-t5-xl", token=st.secrets["huggingface"]["api_key"])
-    
     try:
-        # Call the inference API with the prompt.
-        # The output format may vary based on the model used.
-        output = hf_inference(prompt)
-        # Check if the response is a dict with "generated_text" field
-        if isinstance(output, dict) and "generated_text" in output:
-            interpretation = output["generated_text"]
-        else:
-            interpretation = output
+        # Request a raw response so we can manually parse the output.
+        raw_response = hf_inference(prompt, raw_response=True)
+        try:
+            # Try to parse the response as JSON.
+            response_json = raw_response.json()
+            interpretation = response_json.get("generated_text", "")
+        except Exception:
+            # If JSON parsing fails, fall back to plain text.
+            interpretation = raw_response.text
         return interpretation.strip()
     except Exception as e:
         return f"Error generating interpretation: {e}"
@@ -80,19 +83,18 @@ def interpret_results(latest_data):
 # -------------------------------
 # Simple Chat Interface using Hugging Face for conversation
 def chat_with_expert(messages):
-    # Combine messages into a prompt for context
     prompt = "You are an agricultural expert providing insights based on sensor data.\n"
     for msg in messages:
         prompt += f"{msg['role'].capitalize()}: {msg['content']}\n"
     
     hf_inference = InferenceApi(repo_id="google/flan-t5-xl", token=st.secrets["huggingface"]["api_key"])
-    
     try:
-        output = hf_inference(prompt)
-        if isinstance(output, dict) and "generated_text" in output:
-            return output["generated_text"].strip()
-        else:
-            return output
+        raw_response = hf_inference(prompt, raw_response=True)
+        try:
+            response_json = raw_response.json()
+            return response_json.get("generated_text", "").strip()
+        except Exception:
+            return raw_response.text.strip()
     except Exception as e:
         return f"Error generating response: {e}"
 
@@ -137,19 +139,17 @@ elif mode == "Simple":
         st.markdown("#### Interpretation of Latest Results:")
         st.write(interpretation)
     
-    # Simple chat interface
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
-    
+
     user_input = st.text_input("Enter your question or comment:")
-    
+
     if st.button("Send"):
         st.session_state["chat_history"].append({"role": "user", "content": user_input})
-        # Build prompt with chat history
         messages = [{"role": "system", "content": "You are an agricultural expert."}] + st.session_state["chat_history"]
         response = chat_with_expert(messages)
         st.session_state["chat_history"].append({"role": "assistant", "content": response})
-    
+
     st.markdown("#### Chat History:")
     for msg in st.session_state["chat_history"]:
         if msg["role"] == "user":
