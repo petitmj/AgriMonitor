@@ -3,3 +3,4 @@ pandas
 boto3
 awscli
 huggingface_hub
+aiohttp
