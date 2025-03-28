@@ -10,7 +10,7 @@ from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 # Configuration & AWS Setup
 # ================================
 st.set_page_config(page_title="🌾 Agriculture Monitoring", layout="wide")
-st.title("🌾 Agriculture Monitoring System with AWS Integration")
+st.title("🌾 Agriculture Monitoring System")
 
 # -------------------------------
 # AWS Session Setup
